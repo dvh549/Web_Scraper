@@ -63,6 +63,34 @@ def get_nft_list_change_perc(driver):
     print("List change % retrieved!", len(nft_list_change_perc))
     return nft_list_change_perc
 
+def get_marketplace_data(driver):
+    marketplace_names, volume, traders, sale_count = [], [], [], []
+    class_name = 'marketMetrics_left__zxAfj'
+    names = driver.find_elements(By.CLASS_NAME, class_name)
+    for i in range(1, len(names)):
+        name = names[i]
+        if name.text != "":
+            marketplace_names.append(name.text)
+    print("Marketplace names retrieved!", len(marketplace_names))
+
+    class_name = "marketMetrics_table2___NxYa"
+    marketplace_table = driver.find_elements(By.CLASS_NAME, class_name)
+    rows = marketplace_table[0].find_elements(By.TAG_NAME, "tr")
+    for j in range(2, len(rows)):
+        row = rows[j]
+        volume.append(row.find_elements(By.TAG_NAME, "td")[3].text)
+        traders.append(row.find_elements(By.TAG_NAME, "td")[4].text)
+        sale_count.append(row.find_elements(By.TAG_NAME, "td")[5].text)
+    
+    print("Other data retrieved", len(volume), len(traders), len(sale_count))
+    compiled_dict = {
+        "Name": marketplace_names,
+        "Vol USD": volume,
+        "Traders": traders,
+        "Sale Count": sale_count
+    }
+    return pd.DataFrame(compiled_dict)
+
 def compiler(driver):
     compiled_dict = {
         "Name": get_nft_name(driver),
@@ -81,5 +109,8 @@ if __name__ == "__main__":
     driver, URL = get_driver(), "https://www.flips.finance/"
     driver.get(URL)
     time.sleep(5)
-    print(compiler(driver))
+    # nft_df = compiler(driver)
+    # nft_df.to_csv("data/NFT Rankings.csv", index=False)
+    marketplace_df = get_marketplace_data(driver)
+    marketplace_df.to_csv("data/Marketplace Leaderboard.csv", index=False)
     driver.quit()
